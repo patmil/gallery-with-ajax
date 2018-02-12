@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Łubnice</title>
+  <style>
+  @keyframes moja_animacja
+  {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  body {background:rgba(177, 177, 177, 0.91);}
+  #header{position: absolute;z-index: 1000; margin-left: 20px; margin-top: 20px;}
+  #slides {position: fixed; width: 100%; height: 95%; display: flex; justify-content: center; align-items: center;}
+  #slides>img{max-width: 100%; max-height: 100%;}
+  .img{display: none;}
+  .active{display: block; animation: moja_animacja 5s 1;}
+  </style>
+  <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
+</head>
+<body>
+  <div id="header">
+    <img src="..." alt="Urząd Gminy">
+  </div>
+  <div id="slides">
+  </div>
+  <script>ajax_json_gallery('gallery');
+    var tablica = [];
+    var newTab = [];
+    function ajax_json_gallery(folder){
+      var hr = new XMLHttpRequest();
+      hr.open("GET", "data_gallery.php", true);
+      hr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      hr.send(null);
+      hr.onreadystatechange = function() {
+  	    if(hr.readyState == 4 && hr.status == 200) {
+  		    var d = JSON.parse(hr.responseText);
+  			for(var o in d){
+  				if(d[o].src){
+              tablica.push(d[o].src);
+  				}
+  			}
+        addImage();
+  	    }
+      }
+  }
+  function addImage(){
+    tablica.sort();
+    var slider = document.getElementById('slides');
+    var tab = tablica.length;
+    for(var i = 0; i < tab; i++){
+      slider.innerHTML += '<img class="img" src="'+tablica[i]+'">';
+    }
+    var elements = document.querySelectorAll('.img');
+    firstSlideActive();
+    checkNewImage();
+
+  }
+  function firstSlideActive(){
+    var elements = document.querySelectorAll('.img');
+    var firstElements = elements[0];
+    $(function(){
+      $(firstElements).addClass('active');
+    });
+    move();
+  }
+  function move(){
+    var elements = document.querySelectorAll('.img');
+    var z = 1;
+    setInterval(function () {
+          for(var x = 0; x < elements.length; x++){
+            $(elements[x]).removeClass('active');
+              $(elements[z]).addClass('active');
+              if(z === elements.length){
+                $(elements[z]).removeClass('active');
+              }
+            }
+            z++;
+            if(z > elements.length){
+              firstSlideActive();
+            }
+      }, 60000);
+  }
+  function checkNewImage(){
+    setInterval(function(){
+      var hr = new XMLHttpRequest();
+      hr.open("GET", "json_gallery_data.php", true);
+      hr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      hr.send(null);
+      hr.onreadystatechange = function() {
+        if(hr.readyState == 4 && hr.status == 200) {
+          var d = JSON.parse(hr.responseText);
+        for(var o in d){
+          if(d[o].src){
+              newTab.push(d[o].src);
+          }
+        }
+        var tabMain = tablica.length;
+        var tabPlus = newTab.length;
+        if(tabMain < tabPlus || tabMain > tabPlus){
+          newTab = [];
+          tablica = [];
+          removeImg();
+          ajax_json_gallery();
+        }
+        else{
+          newTab = [];
+        }
+        }
+      }
+    },7200000);
+  }
+  function removeImg(){
+    var removeElement = document.getElementById('slides');
+    removeElement.innerHTML = ' ';
+  }
+  </script>
+</body>
+</html>
